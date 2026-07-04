@@ -1,0 +1,1784 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WXSCOPE — Weather Intelligence Terminal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Orbitron:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* 
+           CSS VARIABLES & THEME SYSTEM*/
+
+      :root {
+        --bg-primary: #06090f;
+        --bg-secondary: #0c1220;
+        --bg-panel: #080e18;
+        --amber: #f5a623;
+        --amber-dim: #8a5c0f;
+        --amber-glow: rgba(245, 166, 35, 0.15);
+        --amber-faint: rgba(245, 166, 35, 0.04);
+        --red: #ff4455;
+        --green-live: #00e87a;
+        --text-primary: #ddd0b3;
+        --text-secondary: #7a6e52;
+        --text-dim: #3a3428;
+        --border: rgba(245, 166, 35, 0.12);
+        --border-bright: rgba(245, 166, 35, 0.45);
+
+        /* Dynamic accent — overridden by weather themes below */
+        --wx-accent: var(--amber);
+        --wx-glow: var(--amber-glow);
+        --wx-accent-raw: 245, 166, 35;
+      }
+
+      /* --- Weather Themes --- */
+      body.wx-sunny {
+        --wx-accent: #f5a623;
+        --wx-glow: rgba(245, 166, 35, 0.15);
+        --wx-accent-raw: 245, 166, 35;
+      }
+      body.wx-rain {
+        --wx-accent: #4d9fff;
+        --wx-glow: rgba(77, 159, 255, 0.15);
+        --wx-accent-raw: 77, 159, 255;
+      }
+      body.wx-storm {
+        --wx-accent: #ff6644;
+        --wx-glow: rgba(255, 102, 68, 0.15);
+        --wx-accent-raw: 255, 102, 68;
+      }
+      body.wx-cloud {
+        --wx-accent: #8eb0cc;
+        --wx-glow: rgba(142, 176, 204, 0.12);
+        --wx-accent-raw: 142, 176, 204;
+      }
+      body.wx-snow {
+        --wx-accent: #aaddff;
+        --wx-glow: rgba(170, 221, 255, 0.14);
+        --wx-accent-raw: 170, 221, 255;
+      }
+      body.wx-mist {
+        --wx-accent: #99aaaa;
+        --wx-glow: rgba(153, 170, 170, 0.1);
+        --wx-accent-raw: 153, 170, 170;
+      }
+      body.wx-hot {
+        --wx-accent: #ff8844;
+        --wx-glow: rgba(255, 136, 68, 0.15);
+        --wx-accent-raw: 255, 136, 68;
+      }
+
+      /* ============================================================
+           RESET & BASE
+        ============================================================ */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: "Share Tech Mono", monospace;
+        min-height: 100vh;
+        overflow-x: hidden;
+        transition: background-color 1.2s ease;
+      }
+
+      /* Scanline effect — subtle CRT feel */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 0, 0, 0.025) 2px,
+          rgba(0, 0, 0, 0.025) 4px
+        );
+        pointer-events: none;
+        z-index: 9999;
+      }
+
+      /* ============================================================
+           ANIMATED RADAR BACKGROUND
+        ============================================================ */
+      .radar-bg {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: min(900px, 150vw);
+        height: min(900px, 150vw);
+        pointer-events: none;
+        z-index: 0;
+        opacity: 1;
+      }
+
+      /* Sweep arm */
+      .radar-sweep {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: conic-gradient(
+          from 0deg,
+          transparent 0deg,
+          rgba(var(--wx-accent-raw), 0.07) 25deg,
+          transparent 55deg
+        );
+        animation: sweep 5s linear infinite;
+        transition: background 1.2s ease;
+      }
+
+      @keyframes sweep {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Concentric range rings */
+      .ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(var(--wx-accent-raw), 0.06);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        transition: border-color 1.2s ease;
+      }
+
+      /* ============================================================
+           LAYOUT CONTAINER
+        ============================================================ */
+      .container {
+        position: relative;
+        z-index: 1;
+        max-width: 1260px;
+        margin: 0 auto;
+        padding: 1.5rem 1.75rem;
+      }
+
+      /* ============================================================
+           HEADER
+        ============================================================ */
+      .header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 1.75rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .logo {
+        font-family: "Orbitron", monospace;
+        font-weight: 900;
+        font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+        letter-spacing: 0.35em;
+        color: var(--wx-accent);
+        text-shadow: 0 0 30px var(--wx-glow);
+        transition:
+          color 0.8s,
+          text-shadow 0.8s;
+      }
+
+      .logo-sub {
+        color: var(--text-secondary);
+        font-family: "Share Tech Mono", monospace;
+        font-weight: 400;
+        font-size: 0.6rem;
+        letter-spacing: 0.25em;
+        display: block;
+        margin-top: 4px;
+      }
+
+      .header-right {
+        text-align: right;
+      }
+
+      .clock {
+        font-family: "Orbitron", monospace;
+        font-size: clamp(1rem, 2vw, 1.3rem);
+        font-weight: 700;
+        color: var(--wx-accent);
+        letter-spacing: 0.2em;
+        transition: color 0.8s;
+      }
+
+      .date-display {
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+        letter-spacing: 0.2em;
+        margin-top: 3px;
+      }
+
+      /* ============================================================
+           SEARCH
+        ============================================================ */
+      .search-section {
+        margin-bottom: 1.5rem;
+      }
+
+      .section-label {
+        font-size: 0.58rem;
+        letter-spacing: 0.4em;
+        color: var(--text-secondary);
+        display: block;
+        margin-bottom: 0.5rem;
+      }
+
+      .search-bar {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .search-input-wrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        padding: 0 1.1rem;
+        transition: border-color 0.2s;
+      }
+
+      .search-input-wrap:focus-within {
+        border-color: var(--border-bright);
+        box-shadow: 0 0 15px rgba(var(--wx-accent-raw), 0.06);
+      }
+
+      .prompt-sym {
+        color: var(--wx-accent);
+        font-size: 1rem;
+        user-select: none;
+        transition: color 0.8s;
+        flex-shrink: 0;
+      }
+
+      .search-input {
+        flex: 1;
+        background: none;
+        border: none;
+        outline: none;
+        color: var(--text-primary);
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.88rem;
+        letter-spacing: 0.12em;
+        padding: 0.9rem 0;
+        caret-color: var(--wx-accent);
+      }
+
+      .search-input::placeholder {
+        color: var(--text-dim);
+      }
+
+      .btn {
+        background: transparent;
+        border: 1px solid var(--wx-accent);
+        color: var(--wx-accent);
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.25em;
+        padding: 0 1.2rem;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          border-color 0.8s,
+          color 0.8s;
+        white-space: nowrap;
+      }
+
+      .btn:hover {
+        background: var(--wx-glow);
+      }
+
+      .btn-locate {
+        border-color: var(--text-secondary);
+        color: var(--text-secondary);
+      }
+
+      .btn-locate:hover {
+        border-color: var(--wx-accent);
+        color: var(--wx-accent);
+        background: var(--wx-glow);
+      }
+
+      /* Recent searches */
+      .recent-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.6rem;
+      }
+
+      .recent-label {
+        font-size: 0.58rem;
+        color: var(--text-dim);
+        letter-spacing: 0.3em;
+      }
+
+      .recent-chip {
+        font-size: 0.62rem;
+        letter-spacing: 0.1em;
+        color: var(--text-secondary);
+        border: 1px solid var(--text-dim);
+        padding: 0.15rem 0.6rem;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          color 0.2s;
+      }
+
+      .recent-chip:hover {
+        border-color: var(--wx-accent);
+        color: var(--wx-accent);
+      }
+
+      /* ============================================================
+           ERROR BANNER
+        ============================================================ */
+      .error-banner {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: rgba(255, 68, 85, 0.07);
+        border: 1px solid rgba(255, 68, 85, 0.3);
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1.5rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+
+      .error-banner.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .err-code {
+        font-family: "Orbitron", monospace;
+        font-size: 0.65rem;
+        color: var(--red);
+        letter-spacing: 0.2em;
+        flex-shrink: 0;
+      }
+
+      .err-msg {
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+        letter-spacing: 0.1em;
+      }
+
+      /* ============================================================
+           LOADING OVERLAY
+        ============================================================ */
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: var(--bg-primary);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        transition: opacity 0.6s;
+      }
+
+      .loading-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .spinner-ring {
+        width: 56px;
+        height: 56px;
+        border: 2px solid var(--text-dim);
+        border-top-color: var(--wx-accent);
+        border-right-color: rgba(var(--wx-accent-raw), 0.4);
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .loading-text {
+        margin-top: 1.25rem;
+        font-family: "Orbitron", monospace;
+        font-size: 0.75rem;
+        letter-spacing: 0.35em;
+        color: var(--wx-accent);
+      }
+
+      .loading-sub {
+        margin-top: 0.5rem;
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+        letter-spacing: 0.2em;
+      }
+
+      .blink {
+        animation: blink 1s step-end infinite;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0;
+        }
+      }
+
+      /* ============================================================
+           WELCOME SCREEN
+        ============================================================ */
+      .welcome {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 5rem 2rem;
+        gap: 1.25rem;
+      }
+
+      .welcome-logo {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: clamp(4rem, 12vw, 8rem);
+        letter-spacing: 0.1em;
+        color: var(--amber);
+        text-shadow: 0 0 60px rgba(245, 166, 35, 0.25);
+        line-height: 1;
+      }
+
+      .welcome-tagline {
+        font-size: 0.68rem;
+        color: var(--text-secondary);
+        letter-spacing: 0.5em;
+        text-align: center;
+      }
+
+      .welcome-hint {
+        font-size: 0.62rem;
+        color: var(--text-dim);
+        letter-spacing: 0.25em;
+        margin-top: 2rem;
+      }
+
+      /* ============================================================
+           MAIN WEATHER GRID
+        ============================================================ */
+      .wx-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 1.25rem;
+        margin-bottom: 1.25rem;
+      }
+
+      /* Panel base */
+      .panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+        transition: border-color 1.2s;
+      }
+
+      /* Top accent line */
+      .panel::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, var(--wx-accent), transparent);
+        opacity: 0.5;
+        transition: background 1.2s;
+      }
+
+      .panel-inner {
+        padding: 1.5rem 1.75rem;
+      }
+
+      .panel-label {
+        font-size: 0.58rem;
+        letter-spacing: 0.4em;
+        color: var(--text-secondary);
+        margin-bottom: 1.1rem;
+      }
+
+      /* --- City panel --- */
+      .city-name {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: clamp(2.8rem, 5vw, 4.5rem);
+        letter-spacing: 0.05em;
+        line-height: 1;
+        color: var(--text-primary);
+      }
+
+      .city-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-top: 0.5rem;
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        letter-spacing: 0.12em;
+        flex-wrap: wrap;
+      }
+
+      .country-badge {
+        color: var(--wx-accent);
+        border: 1px solid var(--wx-accent);
+        padding: 0.1rem 0.45rem;
+        font-size: 0.62rem;
+        letter-spacing: 0.15em;
+        transition:
+          color 0.8s,
+          border-color 0.8s;
+      }
+
+      .live-dot {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .dot {
+        width: 6px;
+        height: 6px;
+        background: var(--green-live);
+        border-radius: 50%;
+        box-shadow: 0 0 6px var(--green-live);
+        animation: pulse-dot 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.4;
+          transform: scale(0.75);
+        }
+      }
+
+      .condition-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1.75rem;
+      }
+
+      .wx-icon {
+        width: 72px;
+        height: 72px;
+        filter: drop-shadow(0 0 12px var(--wx-glow));
+        transition: filter 0.8s;
+        animation: float 3s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-5px);
+        }
+      }
+
+      .condition-info {
+      }
+
+      .condition-main {
+        font-family: "Orbitron", monospace;
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        color: var(--wx-accent);
+        transition: color 0.8s;
+      }
+
+      .condition-desc {
+        font-size: 0.62rem;
+        color: var(--text-secondary);
+        letter-spacing: 0.2em;
+        margin-top: 0.3rem;
+      }
+
+      /* --- Temp panel --- */
+      .temp-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        min-height: 220px;
+        padding: 1.5rem;
+      }
+
+      .temp-big {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: clamp(5.5rem, 10vw, 9rem);
+        line-height: 1;
+        color: var(--wx-accent);
+        text-shadow: 0 0 50px var(--wx-glow);
+        transition:
+          color 0.8s,
+          text-shadow 0.8s;
+        letter-spacing: -0.02em;
+      }
+
+      .unit-toggle {
+        display: flex;
+        margin-top: 1rem;
+      }
+
+      .unit-btn {
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--text-dim);
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.25em;
+        padding: 0.35rem 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .unit-btn.active {
+        background: var(--wx-glow);
+        border-color: var(--wx-accent);
+        color: var(--wx-accent);
+      }
+
+      /* ============================================================
+           GAUGE ROW
+        ============================================================ */
+      .gauge-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+      }
+
+      .gauge-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        padding: 1.25rem 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.6rem;
+        position: relative;
+      }
+
+      .gauge-panel::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--wx-accent),
+          transparent
+        );
+        opacity: 0.25;
+      }
+
+      .gauge-title {
+        font-size: 0.58rem;
+        letter-spacing: 0.3em;
+        color: var(--text-secondary);
+      }
+
+      .gauge-svg {
+        width: 88px;
+        height: 88px;
+        overflow: visible;
+      }
+
+      .gauge-arc-bg {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.05);
+        stroke-width: 5;
+      }
+
+      .gauge-arc-fill {
+        fill: none;
+        stroke: var(--wx-accent);
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-dasharray: 219.9;
+        stroke-dashoffset: 219.9;
+        transform: rotate(-90deg);
+        transform-origin: center;
+        transition:
+          stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+          stroke 0.8s;
+      }
+
+      /* Tick marks on gauge */
+      .gauge-tick {
+        stroke: rgba(255, 255, 255, 0.07);
+        stroke-width: 1;
+      }
+
+      .gauge-val {
+        font-family: "Orbitron", monospace;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--wx-accent);
+        transition: color 0.8s;
+      }
+
+      .gauge-unit-lbl {
+        font-size: 0.58rem;
+        color: var(--text-secondary);
+        letter-spacing: 0.2em;
+        margin-top: -0.3rem;
+      }
+
+      /* ============================================================
+           FORECAST
+        ============================================================ */
+      .forecast-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        margin-bottom: 1.25rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .forecast-panel::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, var(--wx-accent), transparent);
+        opacity: 0.4;
+      }
+
+      .forecast-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.8rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .forecast-title {
+        font-size: 0.58rem;
+        letter-spacing: 0.4em;
+        color: var(--text-secondary);
+      }
+
+      .forecast-src {
+        font-size: 0.55rem;
+        color: var(--text-dim);
+        letter-spacing: 0.2em;
+      }
+
+      .forecast-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .forecast-table tr {
+        border-bottom: 1px solid rgba(var(--wx-accent-raw), 0.04);
+        transition: background 0.15s;
+      }
+
+      .forecast-table tr:last-child {
+        border-bottom: none;
+      }
+      .forecast-table tr:hover {
+        background: var(--amber-faint);
+      }
+
+      .forecast-table td {
+        padding: 0.85rem 1.5rem;
+        vertical-align: middle;
+      }
+
+      .fc-day {
+        font-size: 0.8rem;
+        letter-spacing: 0.12em;
+        color: var(--text-primary);
+      }
+
+      .fc-date {
+        font-size: 0.6rem;
+        color: var(--text-secondary);
+        letter-spacing: 0.15em;
+        margin-top: 2px;
+      }
+
+      .fc-icon {
+        width: 36px;
+        height: 36px;
+      }
+
+      .fc-desc {
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+        letter-spacing: 0.1em;
+      }
+
+      .fc-temps {
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .fc-hi {
+        font-family: "Orbitron", monospace;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--wx-accent);
+        transition: color 0.8s;
+      }
+
+      .fc-lo {
+        font-family: "Orbitron", monospace;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-left: 0.5rem;
+      }
+
+      /* Temp range bar */
+      .fc-bar-cell {
+        width: 120px;
+        padding-right: 1.5rem;
+      }
+
+      .fc-bar-track {
+        height: 3px;
+        background: var(--text-dim);
+        border-radius: 2px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .fc-bar-fill {
+        position: absolute;
+        height: 100%;
+        background: var(--wx-accent);
+        border-radius: 2px;
+        opacity: 0.55;
+        transition: background 0.8s;
+      }
+
+      /* ============================================================
+           FOOTER
+        ============================================================ */
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--border);
+        padding-top: 0.9rem;
+        font-size: 0.58rem;
+        color: var(--text-dim);
+        letter-spacing: 0.18em;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .footer-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      /* ============================================================
+           DATA SECTION VISIBILITY
+        ============================================================ */
+      .data-section {
+        display: none;
+      }
+      .data-section.visible {
+        display: block;
+      }
+
+      /* ============================================================
+           RESPONSIVE
+        ============================================================ */
+      @media (max-width: 900px) {
+        .wx-grid {
+          grid-template-columns: 1fr;
+        }
+        .gauge-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .fc-bar-cell {
+          display: none;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .container {
+          padding: 1rem;
+        }
+        .header {
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        .search-bar {
+          flex-wrap: wrap;
+        }
+        .btn {
+          padding: 0.8rem 1rem;
+        }
+        .gauge-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body class="wx-sunny">
+    <!-- ============================================================
+         RADAR BACKGROUND
+    ============================================================ -->
+    <div class="radar-bg" aria-hidden="true">
+      <div class="radar-sweep"></div>
+      <div class="ring" style="width: 20%; height: 20%"></div>
+      <div class="ring" style="width: 38%; height: 38%"></div>
+      <div class="ring" style="width: 56%; height: 56%"></div>
+      <div class="ring" style="width: 74%; height: 74%"></div>
+      <div class="ring" style="width: 90%; height: 90%"></div>
+    </div>
+
+    <!-- ============================================================
+         LOADING OVERLAY
+    ============================================================ -->
+    <div
+      class="loading-overlay"
+      id="loadingOverlay"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="spinner-ring"></div>
+      <div class="loading-text" id="loadingText">
+        ESTABLISHING LINK<span class="blink">_</span>
+      </div>
+      <div class="loading-sub" id="loadingSub">
+        INITIALIZING WEATHER TERMINAL
+      </div>
+    </div>
+
+    <!-- ============================================================
+         MAIN APP
+    ============================================================ -->
+    <main class="container">
+      <!-- Header -->
+      <header class="header">
+        <div>
+          <div class="logo">WXSCOPE</div>
+          <span class="logo-sub">WEATHER INTELLIGENCE TERMINAL · v2.4.0</span>
+        </div>
+        <div class="header-right">
+          <div class="clock" id="clock">--:--:--</div>
+          <div class="date-display" id="dateDisplay">--- -- ----</div>
+        </div>
+      </header>
+
+      <!-- Search -->
+      <section class="search-section" aria-label="Weather search">
+        <span class="section-label">// LOCATION QUERY</span>
+        <div class="search-bar">
+          <div class="search-input-wrap">
+            <span class="prompt-sym" aria-hidden="true">&gt;_</span>
+            <input
+              type="text"
+              class="search-input"
+              id="searchInput"
+              placeholder="ENTER CITY NAME..."
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="City name search"
+            />
+          </div>
+          <button class="btn" id="searchBtn" aria-label="Search weather">
+            SCAN
+          </button>
+          <button
+            class="btn btn-locate"
+            id="locateBtn"
+            aria-label="Auto-detect location"
+          >
+            ◎ LOCATE
+          </button>
+        </div>
+        <div
+          class="recent-bar"
+          id="recentBar"
+          aria-label="Recent searches"
+        ></div>
+      </section>
+
+      <!-- Error banner -->
+      <div
+        class="error-banner"
+        id="errorBanner"
+        role="alert"
+        aria-live="assertive"
+      >
+        <span class="err-code">ERR_404</span>
+        <span class="err-msg" id="errorMsg"
+          >LOCATION NOT FOUND IN DATABASE</span
+        >
+      </div>
+
+      <!-- Welcome screen -->
+      <div id="welcomeScreen">
+        <div class="welcome" role="presentation">
+          <div class="welcome-logo">WXSCOPE</div>
+          <p class="welcome-tagline">
+            REAL-TIME ATMOSPHERIC INTELLIGENCE SYSTEM
+          </p>
+          <p class="welcome-hint">▼ ENTER CITY NAME ABOVE OR PRESS ◎ LOCATE</p>
+        </div>
+      </div>
+
+      <!-- DATA SECTION (hidden until first fetch) -->
+      <div class="data-section" id="dataSection">
+        <!-- Main grid: City info + Temperature -->
+        <div class="wx-grid">
+          <!-- City + Condition panel -->
+          <div class="panel">
+            <div class="panel-inner">
+              <div class="panel-label">// LOCATION STATUS</div>
+              <div class="city-name" id="cityName">---</div>
+              <div class="city-meta">
+                <span class="country-badge" id="countryBadge">--</span>
+                <span id="localTime">--:-- LOCAL</span>
+                <span class="live-dot">
+                  <span class="dot" aria-hidden="true"></span>
+                  <span>LIVE</span>
+                </span>
+              </div>
+              <div class="condition-row">
+                <img
+                  class="wx-icon"
+                  id="wxIcon"
+                  src=""
+                  alt="Weather condition icon"
+                />
+                <div class="condition-info">
+                  <div class="condition-main" id="condMain">---</div>
+                  <div class="condition-desc" id="condDesc">---</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Temperature panel -->
+          <div class="panel">
+            <div class="temp-inner">
+              <div class="panel-label" style="text-align: center">
+                // TEMPERATURE READING
+              </div>
+              <div class="temp-big" id="tempBig" aria-live="polite">--°</div>
+              <div
+                class="unit-toggle"
+                role="group"
+                aria-label="Temperature unit"
+              >
+                <button
+                  class="unit-btn active"
+                  id="btnC"
+                  onclick="setUnit('C')"
+                  aria-pressed="true"
+                >
+                  °C
+                </button>
+                <button
+                  class="unit-btn"
+                  id="btnF"
+                  onclick="setUnit('F')"
+                  aria-pressed="false"
+                >
+                  °F
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gauge row: 4 metrics -->
+        <div class="gauge-row" role="list" aria-label="Weather metrics">
+          <!-- Humidity -->
+          <div class="gauge-panel" role="listitem">
+            <div class="gauge-title">HUMIDITY</div>
+            <svg
+              class="gauge-svg"
+              viewBox="0 0 88 88"
+              role="img"
+              aria-label="Humidity gauge"
+            >
+              <circle class="gauge-arc-bg" cx="44" cy="44" r="35" />
+              <!-- Tick marks -->
+              <g id="humidity-ticks"></g>
+              <circle
+                class="gauge-arc-fill"
+                id="humArc"
+                cx="44"
+                cy="44"
+                r="35"
+              />
+              <text
+                x="44"
+                y="48"
+                text-anchor="middle"
+                font-family="Orbitron,monospace"
+                font-size="11"
+                font-weight="700"
+                fill="var(--wx-accent)"
+                id="humText"
+              >
+                --
+              </text>
+            </svg>
+            <div class="gauge-unit-lbl">PERCENT %</div>
+          </div>
+
+          <!-- Wind -->
+          <div class="gauge-panel" role="listitem">
+            <div class="gauge-title">WIND SPEED</div>
+            <svg
+              class="gauge-svg"
+              viewBox="0 0 88 88"
+              role="img"
+              aria-label="Wind speed gauge"
+            >
+              <circle class="gauge-arc-bg" cx="44" cy="44" r="35" />
+              <circle
+                class="gauge-arc-fill"
+                id="windArc"
+                cx="44"
+                cy="44"
+                r="35"
+              />
+              <text
+                x="44"
+                y="48"
+                text-anchor="middle"
+                font-family="Orbitron,monospace"
+                font-size="11"
+                font-weight="700"
+                fill="var(--wx-accent)"
+                id="windText"
+              >
+                --
+              </text>
+            </svg>
+            <div class="gauge-unit-lbl">KM / H</div>
+          </div>
+
+          <!-- Feels Like -->
+          <div class="gauge-panel" role="listitem">
+            <div class="gauge-title">FEELS LIKE</div>
+            <svg
+              class="gauge-svg"
+              viewBox="0 0 88 88"
+              role="img"
+              aria-label="Feels like temperature gauge"
+            >
+              <circle class="gauge-arc-bg" cx="44" cy="44" r="35" />
+              <circle
+                class="gauge-arc-fill"
+                id="feelsArc"
+                cx="44"
+                cy="44"
+                r="35"
+              />
+              <text
+                x="44"
+                y="48"
+                text-anchor="middle"
+                font-family="Orbitron,monospace"
+                font-size="11"
+                font-weight="700"
+                fill="var(--wx-accent)"
+                id="feelsText"
+              >
+                --
+              </text>
+            </svg>
+            <div class="gauge-unit-lbl" id="feelsUnit">°C</div>
+          </div>
+
+          <!-- Visibility -->
+          <div class="gauge-panel" role="listitem">
+            <div class="gauge-title">VISIBILITY</div>
+            <svg
+              class="gauge-svg"
+              viewBox="0 0 88 88"
+              role="img"
+              aria-label="Visibility gauge"
+            >
+              <circle class="gauge-arc-bg" cx="44" cy="44" r="35" />
+              <circle
+                class="gauge-arc-fill"
+                id="visArc"
+                cx="44"
+                cy="44"
+                r="35"
+              />
+              <text
+                x="44"
+                y="48"
+                text-anchor="middle"
+                font-family="Orbitron,monospace"
+                font-size="11"
+                font-weight="700"
+                fill="var(--wx-accent)"
+                id="visText"
+              >
+                --
+              </text>
+            </svg>
+            <div class="gauge-unit-lbl">KILOMETERS</div>
+          </div>
+        </div>
+
+        <!-- 5-Day Forecast -->
+        <div class="forecast-panel" role="region" aria-label="5-day forecast">
+          <div class="forecast-header">
+            <span class="forecast-title">// 5-DAY ATMOSPHERIC PROJECTION</span>
+            <span class="forecast-src">OPENWEATHER · FREE TIER</span>
+          </div>
+          <table class="forecast-table" aria-label="5-day weather forecast">
+            <tbody id="forecastBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- /dataSection -->
+
+      <!-- Footer -->
+      <footer class="footer">
+        <span>WXSCOPE TERMINAL © 2025</span>
+        <div class="footer-status">
+          <span
+            class="dot"
+            style="width: 5px; height: 5px"
+            aria-hidden="true"
+          ></span>
+          <span id="lastUpdate">AWAITING DATA</span>
+        </div>
+        <span>DATA SOURCE: OPENWEATHER API</span>
+      </footer>
+    </main>
+    <!-- /container -->
+
+    <script>
+      /* ============================================================
+           WXSCOPE — WEATHER INTELLIGENCE TERMINAL
+           Pure vanilla JS | OpenWeather API | Async/Await
+        ============================================================ */
+
+      /* ------------------------------------------------------------------
+           CONFIG — Replace with your OpenWeather API key
+           Get one free at: https://openweathermap.org/api
+        ------------------------------------------------------------------ */
+      const API_KEY = "432e9fb5c9b2343aeb732749865e1ff2";
+      const BASE_URL = "https://api.openweathermap.org/data/2.5";
+
+      /* ------------------------------------------------------------------
+           STATE
+        ------------------------------------------------------------------ */
+      let currentUnit = "C"; // 'C' or 'F'
+      let currentWeather = null; // latest /weather response
+      let currentForecast = null; // latest /forecast response
+
+      /* ------------------------------------------------------------------
+           DOM REFS
+        ------------------------------------------------------------------ */
+      const $ = (id) => document.getElementById(id);
+      const loadingOverlay = $("loadingOverlay");
+      const loadingText = $("loadingText");
+      const loadingSub = $("loadingSub");
+      const errorBanner = $("errorBanner");
+      const errorMsgEl = $("errorMsg");
+      const welcomeScreen = $("welcomeScreen");
+      const dataSection = $("dataSection");
+      const searchInput = $("searchInput");
+      let errorTimer = null;
+
+      /* ------------------------------------------------------------------
+           CLOCK — live ticking header clock
+        ------------------------------------------------------------------ */
+      function tickClock() {
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, "0");
+        $("clock").textContent =
+          `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        const DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+        const MONTHS = [
+          "JAN",
+          "FEB",
+          "MAR",
+          "APR",
+          "MAY",
+          "JUN",
+          "JUL",
+          "AUG",
+          "SEP",
+          "OCT",
+          "NOV",
+          "DEC",
+        ];
+        $("dateDisplay").textContent =
+          `${DAYS[now.getDay()]} ${pad(now.getDate())} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+      }
+      setInterval(tickClock, 1000);
+      tickClock();
+
+      /* ------------------------------------------------------------------
+           LOADING HELPERS
+        ------------------------------------------------------------------ */
+      function showLoading(msg = "FETCHING DATA...", sub = "") {
+        loadingText.innerHTML = msg + '<span class="blink">_</span>';
+        loadingSub.textContent = sub;
+        loadingOverlay.classList.remove("hidden");
+      }
+
+      function hideLoading() {
+        loadingOverlay.classList.add("hidden");
+      }
+
+      /* ------------------------------------------------------------------
+           ERROR HELPERS
+        ------------------------------------------------------------------ */
+      function showError(msg) {
+        errorMsgEl.textContent = msg;
+        errorBanner.classList.add("visible");
+        clearTimeout(errorTimer);
+        errorTimer = setTimeout(
+          () => errorBanner.classList.remove("visible"),
+          5000,
+        );
+      }
+
+      /* ------------------------------------------------------------------
+           WEATHER THEME — dynamically update accent color based on condition
+        ------------------------------------------------------------------ */
+      function applyTheme(conditionId) {
+        document.body.className = "";
+        if (conditionId >= 200 && conditionId < 300)
+          document.body.classList.add("wx-storm");
+        else if (conditionId >= 300 && conditionId < 600)
+          document.body.classList.add("wx-rain");
+        else if (conditionId >= 600 && conditionId < 700)
+          document.body.classList.add("wx-snow");
+        else if (conditionId >= 700 && conditionId < 800)
+          document.body.classList.add("wx-mist");
+        else if (conditionId === 800) document.body.classList.add("wx-sunny");
+        else document.body.classList.add("wx-cloud");
+      }
+
+      /* ------------------------------------------------------------------
+           TEMPERATURE CONVERSION
+        ------------------------------------------------------------------ */
+      const toF = (c) => (c * 9) / 5 + 32;
+      const cvt = (c, unit) =>
+        unit === "C" ? Math.round(c) : Math.round(toF(c));
+
+      /* Change unit & re-render temps */
+      function setUnit(unit) {
+        currentUnit = unit;
+        $("btnC").classList.toggle("active", unit === "C");
+        $("btnF").classList.toggle("active", unit === "F");
+        $("btnC").setAttribute("aria-pressed", unit === "C");
+        $("btnF").setAttribute("aria-pressed", unit === "F");
+        if (currentWeather) updateTempDisplay(currentWeather);
+        if (currentForecast) renderForecast(currentForecast);
+      }
+
+      /* ------------------------------------------------------------------
+           GAUGE ANIMATION — animate SVG arc from 0 → value
+        ------------------------------------------------------------------ */
+      function setGauge(arcId, value, max) {
+        const CIRC = 2 * Math.PI * 35; // circumference r=35 ≈ 219.9
+        const ratio = Math.min(Math.max(value / max, 0), 1);
+        $(arcId).style.strokeDashoffset = CIRC * (1 - ratio);
+      }
+
+      /* ------------------------------------------------------------------
+           RENDER — update all weather UI fields
+        ------------------------------------------------------------------ */
+      function renderWeather(data) {
+        currentWeather = data;
+
+        // Show data section, hide welcome
+        welcomeScreen.style.display = "none";
+        dataSection.classList.add("visible");
+
+        // City & meta
+        $("cityName").textContent = data.name.toUpperCase();
+        $("countryBadge").textContent = data.sys.country;
+
+        // Local time using timezone offset from API
+        const utcMs = Date.now() + new Date().getTimezoneOffset() * 60000;
+        const localDt = new Date(utcMs + data.timezone * 1000);
+        const lh = String(localDt.getHours()).padStart(2, "0");
+        const lm = String(localDt.getMinutes()).padStart(2, "0");
+        $("localTime").textContent = `${lh}:${lm} LOCAL`;
+
+        // Condition
+        const cond = data.weather[0];
+        $("condMain").textContent = cond.main.toUpperCase();
+        $("condDesc").textContent = cond.description.toUpperCase();
+        $("wxIcon").src =
+          `https://openweathermap.org/img/wn/${cond.icon}@2x.png`;
+        $("wxIcon").alt = cond.description;
+
+        // Apply weather-driven color theme
+        applyTheme(cond.id);
+
+        // Temperature
+        updateTempDisplay(data);
+
+        // Gauges
+        const humidity = data.main.humidity;
+        const windKmh = Math.round(data.wind.speed * 3.6);
+        const feelsC = data.main.feels_like;
+        const visKm = +(data.visibility / 1000).toFixed(1);
+
+        $("humText").textContent = humidity;
+        $("windText").textContent = windKmh;
+        $("visText").textContent = visKm;
+
+        setGauge("humArc", humidity, 100);
+        setGauge("windArc", windKmh, 120);
+        setGauge("visArc", visKm, 10);
+
+        updateFeelsGauge(feelsC);
+
+        // Footer
+        const now = new Date();
+        $("lastUpdate").textContent =
+          `SYNC: ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+
+        // Save search history
+        saveHistory(data.name);
+      }
+
+      /* Update only the temperature-sensitive elements */
+      function updateTempDisplay(data) {
+        $("tempBig").textContent = `${cvt(data.main.temp, currentUnit)}°`;
+        const feelsC = data.main.feels_like;
+        $("feelsText").textContent = cvt(feelsC, currentUnit);
+        $("feelsUnit").textContent = `°${currentUnit}`;
+        updateFeelsGauge(feelsC);
+      }
+
+      /* Feels-like gauge: map -20°C to +50°C range → 0–1 */
+      function updateFeelsGauge(feelsC) {
+        const normalized = (feelsC + 20) / 70;
+        setGauge("feelsArc", normalized * 100, 100);
+        $("feelsText").textContent = cvt(feelsC, currentUnit);
+      }
+
+      /* ------------------------------------------------------------------
+           RENDER FORECAST — 5-day daily forecast table
+        ------------------------------------------------------------------ */
+      function renderForecast(data) {
+        currentForecast = data;
+
+        const DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+        const MONTHS = [
+          "JAN",
+          "FEB",
+          "MAR",
+          "APR",
+          "MAY",
+          "JUN",
+          "JUL",
+          "AUG",
+          "SEP",
+          "OCT",
+          "NOV",
+          "DEC",
+        ];
+
+        // Group forecast items by calendar day
+        const grouped = {};
+        data.list.forEach((item) => {
+          const d = new Date(item.dt * 1000);
+          const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(item);
+        });
+
+        const dayKeys = Object.keys(grouped).slice(0, 5);
+        const tbody = $("forecastBody");
+        tbody.innerHTML = "";
+
+        // Determine global temp range for proportional bars
+        let globalMin = Infinity,
+          globalMax = -Infinity;
+        dayKeys.forEach((key) => {
+          grouped[key].forEach((item) => {
+            if (item.main.temp < globalMin) globalMin = item.main.temp;
+            if (item.main.temp > globalMax) globalMax = item.main.temp;
+          });
+        });
+        const range = globalMax - globalMin || 1;
+
+        dayKeys.forEach((key) => {
+          const items = grouped[key];
+          const temps = items.map((i) => i.main.temp);
+          const highC = Math.max(...temps);
+          const lowC = Math.min(...temps);
+          const midItem = items[Math.floor(items.length / 2)];
+          const icon = midItem.weather[0].icon;
+          const desc = midItem.weather[0].description.toUpperCase();
+          const d = new Date(midItem.dt * 1000);
+
+          const hi = cvt(highC, currentUnit);
+          const lo = cvt(lowC, currentUnit);
+
+          // Bar position & width (proportional to global range)
+          const barLeft = (((lowC - globalMin) / range) * 100).toFixed(1);
+          const barWidth = (((highC - lowC) / range) * 100).toFixed(1);
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+                    <td>
+                        <div class="fc-day">${DAYS[d.getDay()]}</div>
+                        <div class="fc-date">${String(d.getDate()).padStart(2, "0")} ${MONTHS[d.getMonth()]}</div>
+                    </td>
+                    <td><img class="fc-icon" src="https://openweathermap.org/img/wn/${icon}.png" alt="${desc}" /></td>
+                    <td class="fc-desc">${desc}</td>
+                    <td class="fc-bar-cell">
+                        <div class="fc-bar-track">
+                            <div class="fc-bar-fill" style="left:${barLeft}%;width:${barWidth}%"></div>
+                        </div>
+                    </td>
+                    <td class="fc-temps">
+                        <span class="fc-hi">${hi}°</span>
+                        <span class="fc-lo">${lo}°</span>
+                    </td>
+                `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      /* ------------------------------------------------------------------
+           API CALLS — async/await with try/catch
+        ------------------------------------------------------------------ */
+      async function fetchByCity(city) {
+        showLoading("SCANNING LOCATION", `QUERY: ${city.toUpperCase()}`);
+        try {
+          // Parallel fetch: current weather + 5-day forecast
+          const [wxRes, fcRes] = await Promise.all([
+            fetch(
+              `${BASE_URL}/weather?q=${encodeURIComponent(city)}&units=metric&appid=${API_KEY}`,
+            ),
+            fetch(
+              `${BASE_URL}/forecast?q=${encodeURIComponent(city)}&units=metric&appid=${API_KEY}`,
+            ),
+          ]);
+
+          if (!wxRes.ok) throw new Error(getApiError(wxRes.status));
+
+          const wxData = await wxRes.json();
+          const fcData = await fcRes.json();
+
+          renderWeather(wxData);
+          renderForecast(fcData);
+        } catch (err) {
+          showError(err.message || "UNKNOWN TRANSMISSION ERROR");
+          if (!currentWeather) {
+            welcomeScreen.style.display = "";
+            dataSection.classList.remove("visible");
+          }
+        } finally {
+          hideLoading();
+        }
+      }
+
+      async function fetchByCoords(lat, lon) {
+        showLoading(
+          "TRIANGULATING POSITION",
+          `${lat.toFixed(4)}°N ${lon.toFixed(4)}°E`,
+        );
+        try {
+          const [wxRes, fcRes] = await Promise.all([
+            fetch(
+              `${BASE_URL}/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`,
+            ),
+            fetch(
+              `${BASE_URL}/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`,
+            ),
+          ]);
+
+          if (!wxRes.ok) throw new Error(getApiError(wxRes.status));
+
+          const wxData = await wxRes.json();
+          const fcData = await fcRes.json();
+
+          renderWeather(wxData);
+          renderForecast(fcData);
+        } catch (err) {
+          showError(err.message || "FAILED TO RESOLVE COORDINATES");
+          if (!currentWeather) {
+            welcomeScreen.style.display = "";
+            dataSection.classList.remove("visible");
+          }
+        } finally {
+          hideLoading();
+        }
+      }
+
+      /* Map HTTP status codes to human-readable terminal errors */
+      function getApiError(status) {
+        const codes = {
+          401: "INVALID API KEY — CHECK CREDENTIALS",
+          404: "LOCATION NOT FOUND IN DATABASE",
+          429: "RATE LIMIT EXCEEDED — TRY AGAIN LATER",
+          500: "REMOTE SERVER FAILURE",
+        };
+        return codes[status] || `TRANSMISSION FAILURE [${status}]`;
+      }
+
+      /* ------------------------------------------------------------------
+           GEOLOCATION — HTML5 Geolocation API
+        ------------------------------------------------------------------ */
+      function autoLocate() {
+        if (!navigator.geolocation) {
+          showError("GEOLOCATION NOT SUPPORTED BY THIS BROWSER");
+          return;
+        }
+        showLoading("ACQUIRING GPS SIGNAL", "REQUESTING DEVICE LOCATION...");
+        navigator.geolocation.getCurrentPosition(
+          (pos) => fetchByCoords(pos.coords.latitude, pos.coords.longitude),
+          (err) => {
+            hideLoading();
+            const msgs = {
+              1: "GEOLOCATION ACCESS DENIED BY USER",
+              2: "POSITION UNAVAILABLE",
+              3: "GEOLOCATION REQUEST TIMED OUT",
+            };
+            showError(msgs[err.code] || "GEOLOCATION FAILED");
+            if (!currentWeather) welcomeScreen.style.display = "";
+          },
+          { timeout: 8000, enableHighAccuracy: false },
+        );
+      }
+
+      /* ------------------------------------------------------------------
+           SEARCH HISTORY — localStorage persistence
+        ------------------------------------------------------------------ */
+      const HISTORY_KEY = "wxscope_v2_history";
+      const MAX_HISTORY = 8;
+
+      function getHistory() {
+        try {
+          return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+        } catch {
+          return [];
+        }
+      }
+
+      function saveHistory(city) {
+        let h = getHistory().filter(
+          (c) => c.toLowerCase() !== city.toLowerCase(),
+        );
+        h.unshift(city);
+        h = h.slice(0, MAX_HISTORY);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+        renderHistory();
+      }
+
+      function renderHistory() {
+        const history = getHistory();
+        const container = $("recentBar");
+        container.innerHTML = "";
+        if (!history.length) return;
+
+        const lbl = document.createElement("span");
+        lbl.className = "recent-label";
+        lbl.textContent = "HISTORY:";
+        container.appendChild(lbl);
+
+        history.forEach((city) => {
+          const chip = document.createElement("span");
+          chip.className = "recent-chip";
+          chip.textContent = city.toUpperCase();
+          chip.setAttribute("role", "button");
+          chip.setAttribute("tabindex", "0");
+          chip.setAttribute("aria-label", `Search ${city}`);
+          chip.addEventListener("click", () => {
+            searchInput.value = city;
+            fetchByCity(city);
+          });
+          chip.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              searchInput.value = city;
+              fetchByCity(city);
+            }
+          });
+          container.appendChild(chip);
+        });
+      }
+
+      /* ------------------------------------------------------------------
+           EVENT LISTENERS
+        ------------------------------------------------------------------ */
+      $("searchBtn").addEventListener("click", () => {
+        const city = searchInput.value.trim();
+        if (city) fetchByCity(city);
+        else showError("PLEASE ENTER A CITY NAME");
+      });
+
+      searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          const city = searchInput.value.trim();
+          if (city) fetchByCity(city);
+        }
+      });
+
+      $("locateBtn").addEventListener("click", autoLocate);
+
+      /* ------------------------------------------------------------------
+           INIT — boot sequence
+        ------------------------------------------------------------------ */
+      function init() {
+        renderHistory(); // populate recent searches from localStorage
+        autoLocate(); // auto-fetch on load using geolocation
+      }
+
+      init();
+    </script>
+  </body>
+</html>
