@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WXSCOPE — Project Execution Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0d1117;
+    --bg2:       #161b22;
+    --bg3:       #1c2128;
+    --border:    #30363d;
+    --text:      #e6edf3;
+    --text2:     #8b949e;
+    --text3:     #6e7681;
+    --blue:      #58a6ff;
+    --green:     #3fb950;
+    --orange:    #d29922;
+    --red:       #f85149;
+    --purple:    #bc8cff;
+    --teal:      #39d353;
+    --done-bg:   rgba(63,185,80,0.08);
+    --todo-bg:   rgba(88,166,255,0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 2rem 1rem;
+  }
+
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* ---- TOP HEADER ---- */
+  .doc-header {
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 2rem 2.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .doc-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .doc-sub {
+    color: var(--text2);
+    font-size: 0.82rem;
+    margin-top: 0.3rem;
+  }
+
+  .doc-meta {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    font-size: 0.75rem;
+    color: var(--text3);
+  }
+
+  .meta-item span {
+    color: var(--text2);
+    font-weight: 500;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 2px;
+  }
+
+  .badge-blue   { background: rgba(88,166,255,0.12);  color: var(--blue);   }
+  .badge-green  { background: rgba(63,185,80,0.12);   color: var(--green);  }
+  .badge-orange { background: rgba(210,153,34,0.12);  color: var(--orange); }
+  .badge-red    { background: rgba(248,81,73,0.12);   color: var(--red);    }
+  .badge-purple { background: rgba(188,140,255,0.12); color: var(--purple); }
+
+  /* ---- SECTION ---- */
+  .section {
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text3);
+    font-weight: 600;
+    min-width: 2rem;
+  }
+
+  .section-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.01em;
+    flex: 1;
+  }
+
+  .section-body { padding: 1.5rem; }
+
+  /* ---- REQUIREMENT TABLE ---- */
+  .req-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+
+  .req-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    color: var(--text3);
+    font-weight: 600;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  .req-table td {
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid rgba(48,54,61,0.6);
+    vertical-align: top;
+  }
+
+  .req-table tr:last-child td { border-bottom: none; }
+  .req-table tr:hover td { background: rgba(255,255,255,0.015); }
+
+  .req-id {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  /* ---- PAPER DESIGN NOTES ---- */
+  .paper-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .paper-card {
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    padding: 1rem 1.25rem;
+  }
+
+  .paper-card-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--blue);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  .paper-box {
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    padding: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text2);
+    line-height: 1.8;
+    white-space: pre;
+  }
+
+  .note-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .note-list li {
+    font-size: 0.78rem;
+    color: var(--text2);
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .note-list li::before {
+    content: '→';
+    color: var(--text3);
+    flex-shrink: 0;
+  }
+
+  /* ---- SPRINT BOARD ---- */
+  .sprint-block {
+    border: 1px solid var(--border);
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+
+  .sprint-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .sprint-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+
+  .sprint-dates {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--text3);
+  }
+
+  /* Task rows */
+  .task-row {
+    display: grid;
+    grid-template-columns: 2rem 1fr auto auto;
+    align-items: start;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid rgba(48,54,61,0.5);
+    transition: background 0.1s;
+  }
+
+  .task-row:last-child { border-bottom: none; }
+  .task-row:hover { background: rgba(255,255,255,0.02); }
+
+  .task-check {
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 3px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    cursor: pointer;
+    position: relative;
+    background: var(--bg);
+  }
+
+  .task-check.done {
+    border-color: var(--green);
+    background: rgba(63,185,80,0.15);
+  }
+
+  .task-check.done::after {
+    content: '✓';
+    position: absolute;
+    top: -1px; left: 2px;
+    font-size: 11px;
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  .task-text {
+    font-size: 0.8rem;
+    color: var(--text);
+  }
+
+  .task-text small {
+    display: block;
+    color: var(--text3);
+    font-size: 0.7rem;
+    margin-top: 0.2rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .task-est {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+
+  /* ---- TEST CHECKLIST ---- */
+  .test-section-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--text3);
+    text-transform: uppercase;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .test-section-label:first-child { margin-top: 0; }
+
+  .test-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid rgba(48,54,61,0.4);
+  }
+
+  .test-row:last-child { border-bottom: none; }
+
+  .test-check {
+    width: 14px; height: 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    background: var(--bg);
+    cursor: pointer;
+  }
+
+  .test-label {
+    flex: 1;
+    font-size: 0.78rem;
+    color: var(--text);
+  }
+
+  .test-expected {
+    font-size: 0.7rem;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .pass-fail {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .pf-btn {
+    font-size: 0.62rem;
+    padding: 0.1rem 0.5rem;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    border-radius: 2px;
+  }
+
+  .pf-btn:hover.pass { border-color: var(--green); color: var(--green); }
+  .pf-btn:hover.fail { border-color: var(--red); color: var(--red); }
+  .pf-btn.active-pass { border-color: var(--green); color: var(--green); background: rgba(63,185,80,0.1); }
+  .pf-btn.active-fail { border-color: var(--red); color: var(--red); background: rgba(248,81,73,0.1); }
+
+  /* ---- DEPLOY ---- */
+  .deploy-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .deploy-step {
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(48,54,61,0.5);
+    position: relative;
+  }
+
+  .deploy-step:last-child { border-bottom: none; }
+
+  .step-num {
+    width: 28px; height: 28px;
+    border: 1.5px solid var(--blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--blue);
+    flex-shrink: 0;
+    background: rgba(88,166,255,0.08);
+  }
+
+  .step-content {}
+
+  .step-title {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+  }
+
+  .step-desc {
+    font-size: 0.76rem;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  .code-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    padding: 0.6rem 0.9rem;
+    margin-top: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--teal);
+    line-height: 1.7;
+  }
+
+  /* ---- PROGRESS OVERVIEW ---- */
+  .progress-bar-wrap {
+    margin-top: 0.75rem;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text3);
+    margin-bottom: 0.35rem;
+  }
+
+  .progress-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  /* ---- INTERVIEW CARD ---- */
+  .interview-card {
+    background: rgba(88,166,255,0.05);
+    border: 1px solid rgba(88,166,255,0.2);
+    border-left: 3px solid var(--blue);
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+  }
+
+  .interview-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--blue);
+    margin-bottom: 0.5rem;
+  }
+
+  .interview-text {
+    font-size: 0.8rem;
+    color: var(--text);
+    line-height: 1.7;
+    font-style: italic;
+  }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 600px) {
+    .paper-grid { grid-template-columns: 1fr; }
+    .task-row   { grid-template-columns: 2rem 1fr; }
+    .task-est   { display: none; }
+    .pass-fail  { flex-direction: column; }
+  }
+
+  /* Print styles */
+  @media print {
+    body { background: white; color: black; }
+    .section, .sprint-block { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============================================================
+       DOCUMENT HEADER
+  ============================================================ -->
+  <div class="doc-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <div class="doc-title">WXSCOPE — Project Execution Plan</div>
+        <div class="doc-sub">Real-Time Weather Intelligence Terminal · Agile Sprint Plan</div>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <span class="badge badge-blue">AGILE</span>
+        <span class="badge badge-orange">IN PROGRESS</span>
+        <span class="badge badge-green">WEEK 1</span>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div class="meta-item">Project: <span>WXSCOPE</span></div>
+      <div class="meta-item">Stack: <span>HTML · CSS · Vanilla JS</span></div>
+      <div class="meta-item">API: <span>OpenWeather Free Tier</span></div>
+      <div class="meta-item">Deploy: <span>Vercel</span></div>
+      <div class="meta-item">Sprints: <span>3 × 1 Week</span></div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       PHASE 1 — REQUIREMENT GATHERING
+  ============================================================ -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <span class="section-title">Requirement Gathering</span>
+      <span class="badge badge-green">DONE</span>
+    </div>
+    <div class="section-body">
+
+      <!-- Problem Statement -->
+      <div style="margin-bottom:1.5rem;">
+        <div class="test-section-label">Problem Statement</div>
+        <div style="font-size:0.82rem;color:var(--text2);line-height:1.8;padding:0.75rem;background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--purple);">
+          Users want to check live weather quickly without switching between multiple apps.
+          Existing apps are cluttered with ads and unnecessary features.
+          A clean, fast, single-page weather terminal solves this.
+        </div>
+      </div>
+
+      <!-- User Questions -->
+      <div style="margin-bottom:1.5rem;">
+        <div class="test-section-label">User Analysis — 3 Questions Every Dev Must Answer</div>
+        <table class="req-table">
+          <tr>
+            <th>QUESTION</th>
+            <th>ANSWER FOR WXSCOPE</th>
+          </tr>
+          <tr>
+            <td style="color:var(--orange);font-weight:500;">Who is the user?</td>
+            <td style="color:var(--text2);">Anyone who wants quick weather — students, travellers, professionals</td>
+          </tr>
+          <tr>
+            <td style="color:var(--orange);font-weight:500;">What problem am I solving?</td>
+            <td style="color:var(--text2);">Get live weather for any city + auto-detect location in one page</td>
+          </tr>
+          <tr>
+            <td style="color:var(--orange);font-weight:500;">What is the MVP?</td>
+            <td style="color:var(--text2);">Search bar + current weather display. Everything else is extra.</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Functional Requirements -->
+      <div class="test-section-label">Functional Requirements (MUST HAVE)</div>
+      <table class="req-table" style="margin-bottom:1rem;">
+        <tr>
+          <th>REQ ID</th>
+          <th>FEATURE</th>
+          <th>PRIORITY</th>
+          <th>STATUS</th>
+        </tr>
+        <tr>
+          <td class="req-id">FR-01</td>
+          <td>Search weather by city name</td>
+          <td><span class="badge badge-red">P1 MUST</span></td>
+          <td><span class="badge badge-green">BUILT</span></td>
+        </tr>
+        <tr>
+          <td class="req-id">FR-02</td>
+          <td>Display temperature (C° / F° toggle)</td>
+          <td><span class="badge badge-red">P1 MUST</span></td>
+          <td><span class="badge badge-green">BUILT</span></td>
+        </tr>
+        <tr>
+          <td class="req-id">FR-03</td>
+          <td>Show weather condition + icon</td>
+          <td><span class="badge badge-red">P1 MUST</span></td>
+          <td><span class="badge badge-green">BUILT</span></td>
+        </tr>
+        <tr>
+          <td class="req-id">FR-04</td>
+          <td>Humidity, Wind Speed, Feels Like, Visibility</td>
+          <td><span class="badge badge-red">P1 MUST</span></td>
+          <td><span class="badge badge-green">BUILT</span></td>
+        </tr>
+        <tr>
+          <td class="req-id">FR-05</td>
+          <td>5-Day forecast section</td>
+          <td><span class="badge badge-orange">P2 SHOULD</span></td>
+          <td><span class="badge badge-green">BUILT</span></td>
+        </tr>
+        <tr>
+          <td class="req-id">FR-06</td>
+          <td>Auto GPS location detection</td>
+          <td><span class="badge badge-orange">P2 SHOULD</span></td>
+          <td><span class="badge badge-green">BUILT</span></td>
+        </tr>
+        <tr>
+          <td class="req-id">FR-07</td>
+          <td>Recent search history (localStorage)</td>
+          <td><span class="badge badge-orange">P2 SHOULD</span></td>
+          <td><span class="badge badge-green">BUILT</span></td>
+        </tr>
+        <tr>
+          <td class="req-id">FR-08</td>
+          <td>Error handling — city not found</td>
+          <td><span class="badge badge-red">P1 MUST</span></td>
+          <td><span class="badge badge-green">BUILT</span></td>
+        </tr>
+        <tr>
+          <td class="req-id">FR-09</td>
+          <td>Loading spinner during API call</td>
+          <td><span class="badge badge-red">P1 MUST</span></td>
+          <td><span class="badge badge-green">BUILT</span></td>
+        </tr>
+        <tr>
+          <td class="req-id">FR-10</td>
+          <td>Dynamic theme based on weather</td>
+          <td><span class="badge badge-blue">P3 NICE</span></td>
+          <td><span class="badge badge-green">BUILT</span></td>
+        </tr>
+      </table>
+
+      <!-- Non Functional -->
+      <div class="test-section-label">Non-Functional Requirements</div>
+      <table class="req-table">
+        <tr>
+          <th>REQ ID</th>
+          <th>REQUIREMENT</th>
+          <th>TARGET</th>
+        </tr>
+        <tr>
+          <td class="req-id">NFR-01</td>
+          <td>Page load time</td>
+          <td style="color:var(--green);">Under 2 seconds</td>
+        </tr>
+        <tr>
+          <td class="req-id">NFR-02</td>
+          <td>Responsive — mobile, tablet, desktop</td>
+          <td style="color:var(--green);">All screen sizes</td>
+        </tr>
+        <tr>
+          <td class="req-id">NFR-03</td>
+          <td>Browser support</td>
+          <td style="color:var(--green);">Chrome, Edge, Firefox, Safari</td>
+        </tr>
+        <tr>
+          <td class="req-id">NFR-04</td>
+          <td>API call error handling</td>
+          <td style="color:var(--green);">All HTTP errors handled</td>
+        </tr>
+        <tr>
+          <td class="req-id">NFR-05</td>
+          <td>No frameworks — pure vanilla JS</td>
+          <td style="color:var(--green);">Zero dependencies</td>
+        </tr>
+      </table>
+
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       PHASE 2 — PAPER DESIGN NOTES
+  ============================================================ -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <span class="section-title">Design Notes (Paper Sketch → Code)</span>
+      <span class="badge badge-green">DONE</span>
+    </div>
+    <div class="section-body">
+
+      <div style="font-size:0.78rem;color:var(--text3);margin-bottom:1rem;">
+        ↓ This is how you document a paper sketch before coding. Draw these boxes on paper, then write notes beside them.
+      </div>
+
+      <div class="paper-grid">
+
+        <!-- Layout sketch -->
+        <div class="paper-card">
+          <div class="paper-card-title">Page Layout (Rough Sketch)</div>
+          <div class="paper-box">┌─────────────────────────┐
+│  LOGO          CLOCK   │  ← Header
+├─────────────────────────┤
+│  [ Search Bar ] [SCAN] │  ← Search
+│  history chips here    │
+├─────────────────────────┤
+│  City Name  │  Temp    │  ← Main Grid
+│  Condition  │  °C / °F │  (2 columns)
+├─────────────────────────┤
+│  HUM  WIND  FEEL  VIS  │  ← 4 Gauges
+│  (arc gauges row)      │
+├─────────────────────────┤
+│  5-DAY FORECAST TABLE  │  ← Forecast
+└─────────────────────────┘</div>
+        </div>
+
+        <!-- Color decisions -->
+        <div class="paper-card">
+          <div class="paper-card-title">Color System Notes</div>
+          <div class="paper-box">Background  → #06090f (near black)
+Panel bg    → #0c1220
+Text        → #ddd0b3 (warm white)
+
+WEATHER THEMES:
+sunny  → amber  #f5a623
+rain   → blue   #4d9fff
+storm  → orange #ff6644
+cloud  → grey   #8eb0cc
+snow   → ice    #aaddff
+mist   → grey   #99aaaa
+
+One CSS variable --wx-accent
+controls ALL colors at once</div>
+        </div>
+
+        <!-- Font decisions -->
+        <div class="paper-card">
+          <div class="paper-card-title">Typography Plan</div>
+          <ul class="note-list">
+            <li>LOGO / big headings → Bebas Neue (tall, bold)</li>
+            <li>Numbers / gauges → Orbitron (sci-fi feel)</li>
+            <li>Body text / labels → Share Tech Mono (terminal)</li>
+            <li>All fonts → Google Fonts CDN</li>
+            <li>Font sizes → clamp() for responsive scaling</li>
+            <li>Letter spacing on labels → 0.3em - 0.4em</li>
+          </ul>
+        </div>
+
+        <!-- Component decisions -->
+        <div class="paper-card">
+          <div class="paper-card-title">Component Decisions</div>
+          <ul class="note-list">
+            <li>Gauges → SVG arc (stroke-dashoffset trick)</li>
+            <li>Background → conic-gradient radar sweep</li>
+            <li>Forecast → HTML table (semantic)</li>
+            <li>Loading → fixed overlay, opacity toggle</li>
+            <li>Error → slide-in banner, auto-dismiss 5s</li>
+            <li>Theme change → JS adds class to body tag</li>
+            <li>Animations → float, pulse-dot, spin — pure CSS</li>
+          </ul>
+        </div>
+
+        <!-- API plan -->
+        <div class="paper-card">
+          <div class="paper-card-title">API Endpoints Needed</div>
+          <div class="paper-box">ENDPOINT 1 — Current Weather
+/weather?q={city}&units=metric
+Returns: temp, humidity, wind,
+         condition, icon, country
+
+ENDPOINT 2 — 5-Day Forecast
+/forecast?q={city}&units=metric
+Returns: list of 40 readings
+We group by day → 5 days
+
+ENDPOINT 3 — By GPS Coords
+/weather?lat={lat}&lon={lon}
+/forecast?lat={lat}&lon={lon}</div>
+        </div>
+
+        <!-- State plan -->
+        <div class="paper-card">
+          <div class="paper-card-title">State & Data Plan</div>
+          <ul class="note-list">
+            <li>currentUnit → 'C' or 'F' (in memory)</li>
+            <li>currentWeather → last API response (in memory)</li>
+            <li>currentForecast → last forecast response</li>
+            <li>searchHistory → localStorage array, max 8</li>
+            <li>No global state library needed — just variables</li>
+            <li>On unit toggle → re-render from saved data (no re-fetch)</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="interview-card">
+        <div class="interview-label">▸ INTERVIEW ANSWER — "How did you design this project?"</div>
+        <div class="interview-text">
+          "Before writing any code, I sketched the layout on paper — a two-column main grid for city info and temperature, a gauge row below, and a forecast table. I planned the color system using CSS custom properties so a single variable controls the entire theme. I also mapped out which API endpoints I needed and what data each one returns, so I knew exactly what to render before I touched the code."
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       PHASE 3 — SPRINTS
+  ============================================================ -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <span class="section-title">Sprint Plan — 3 Weeks · 1 Task at a Time</span>
+      <span class="badge badge-orange">IN PROGRESS</span>
+    </div>
+    <div class="section-body">
+
+      <!-- Sprint 1 -->
+      <div class="sprint-block">
+        <div class="sprint-header">
+          <div>
+            <div class="sprint-name">🟦 SPRINT 1 — Core Foundation</div>
+            <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Goal: Working weather app with basic search & display</div>
+          </div>
+          <div>
+            <span class="sprint-dates">WEEK 1 · 7 DAYS</span>
+            <div style="margin-top:4px;"><span class="badge badge-green">COMPLETED</span></div>
+          </div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check done"></div>
+          <div class="task-text">
+            Set up project folder structure
+            <small>Create: index.html · style.css · script.js · assets/ folder</small>
+          </div>
+          <div><span class="badge badge-green">DONE</span></div>
+          <div class="task-est">30 min</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check done"></div>
+          <div class="task-text">
+            Register OpenWeather account + get API key
+            <small>openweathermap.org → free tier → copy API key to config</small>
+          </div>
+          <div><span class="badge badge-green">DONE</span></div>
+          <div class="task-est">15 min</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check done"></div>
+          <div class="task-text">
+            Build HTML structure (semantic tags only)
+            <small>header, main, search section, weather card, forecast section</small>
+          </div>
+          <div><span class="badge badge-green">DONE</span></div>
+          <div class="task-est">2 hrs</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check done"></div>
+          <div class="task-text">
+            Write fetchByCity() function with async/await
+            <small>fetch /weather endpoint → console.log the response first</small>
+          </div>
+          <div><span class="badge badge-green">DONE</span></div>
+          <div class="task-est">1 hr</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check done"></div>
+          <div class="task-text">
+            Display city name, temperature, condition, icon
+            <small>renderWeather(data) function → write to DOM</small>
+          </div>
+          <div><span class="badge badge-green">DONE</span></div>
+          <div class="task-est">1.5 hrs</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check done"></div>
+          <div class="task-text">
+            Search bar — click + Enter key support
+            <small>addEventListener on button + keydown Enter event</small>
+          </div>
+          <div><span class="badge badge-green">DONE</span></div>
+          <div class="task-est">30 min</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check done"></div>
+          <div class="task-text">
+            Error handling — city not found, network error
+            <small>try/catch + check res.ok + show error message in UI</small>
+          </div>
+          <div><span class="badge badge-green">DONE</span></div>
+          <div class="task-est">45 min</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check done"></div>
+          <div class="task-text">
+            Loading spinner — show/hide around fetch calls
+            <small>showLoading() and hideLoading() in finally{} block</small>
+          </div>
+          <div><span class="badge badge-green">DONE</span></div>
+          <div class="task-est">30 min</div>
+        </div>
+
+        <div style="padding:0.75rem 1.25rem;background:rgba(63,185,80,0.05);border-top:1px solid var(--border);">
+          <div class="progress-label"><span>Sprint 1 Progress</span><span style="color:var(--green)">8/8 tasks</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
+        </div>
+      </div>
+
+      <!-- Sprint 2 -->
+      <div class="sprint-block">
+        <div class="sprint-header">
+          <div>
+            <div class="sprint-name">🟨 SPRINT 2 — Features</div>
+            <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Goal: Add forecast, GPS, unit toggle, search history</div>
+          </div>
+          <div>
+            <span class="sprint-dates">WEEK 2 · 7 DAYS</span>
+            <div style="margin-top:4px;"><span class="badge badge-orange">IN PROGRESS</span></div>
+          </div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check done"></div>
+          <div class="task-text">
+            Fetch 5-day forecast — /forecast endpoint
+            <small>Promise.all to run both fetches at same time (parallel)</small>
+          </div>
+          <div><span class="badge badge-green">DONE</span></div>
+          <div class="task-est">1 hr</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check done"></div>
+          <div class="task-text">
+            renderForecast() — group by day, show 5 rows
+            <small>Group 40 readings by date key → pick one per day</small>
+          </div>
+          <div><span class="badge badge-green">DONE</span></div>
+          <div class="task-est">2 hrs</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check done"></div>
+          <div class="task-text">
+            °C / °F toggle button
+            <small>setUnit() → re-render temps from saved data — no re-fetch</small>
+          </div>
+          <div><span class="badge badge-green">DONE</span></div>
+          <div class="task-est">45 min</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check done"></div>
+          <div class="task-text">
+            Geolocation — autoLocate() function
+            <small>navigator.geolocation.getCurrentPosition → fetchByCoords()</small>
+          </div>
+          <div><span class="badge badge-green">DONE</span></div>
+          <div class="task-est">1 hr</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check done"></div>
+          <div class="task-text">
+            Search history — localStorage save & render chips
+            <small>saveHistory() + getHistory() + renderHistory() functions</small>
+          </div>
+          <div><span class="badge badge-green">DONE</span></div>
+          <div class="task-est">1 hr</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check"></div>
+          <div class="task-text">
+            Humidity, Wind, Feels Like, Visibility display
+            <small>Map API values → show in 4 separate metric boxes</small>
+          </div>
+          <div><span class="badge badge-blue">TODO</span></div>
+          <div class="task-est">1 hr</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check"></div>
+          <div class="task-text">
+            SVG arc gauge animation
+            <small>stroke-dashoffset formula → setGauge() function</small>
+          </div>
+          <div><span class="badge badge-blue">TODO</span></div>
+          <div class="task-est">1.5 hrs</div>
+        </div>
+
+        <div style="padding:0.75rem 1.25rem;background:rgba(210,153,34,0.05);border-top:1px solid var(--border);">
+          <div class="progress-label"><span>Sprint 2 Progress</span><span style="color:var(--orange)">5/7 tasks</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:71%;background:var(--orange)"></div></div>
+        </div>
+      </div>
+
+      <!-- Sprint 3 -->
+      <div class="sprint-block">
+        <div class="sprint-header">
+          <div>
+            <div class="sprint-name">🟥 SPRINT 3 — Polish + Deploy</div>
+            <div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">Goal: UI polish, responsiveness, testing, Vercel deploy</div>
+          </div>
+          <div>
+            <span class="sprint-dates">WEEK 3 · 7 DAYS</span>
+            <div style="margin-top:4px;"><span class="badge badge-blue">UPCOMING</span></div>
+          </div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check"></div>
+          <div class="task-text">
+            Dynamic weather theme — CSS class per condition
+            <small>applyTheme(conditionId) → add wx-sunny / wx-rain etc to body</small>
+          </div>
+          <div><span class="badge badge-blue">TODO</span></div>
+          <div class="task-est">1 hr</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check"></div>
+          <div class="task-text">
+            CSS animations — float icon, pulse dot, radar sweep
+            <small>@keyframes float, pulse-dot, sweep → apply on elements</small>
+          </div>
+          <div><span class="badge badge-blue">TODO</span></div>
+          <div class="task-est">1 hr</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check"></div>
+          <div class="task-text">
+            Responsive CSS — mobile first breakpoints
+            <small>Test at 375px, 768px, 1024px, 1440px widths</small>
+          </div>
+          <div><span class="badge badge-blue">TODO</span></div>
+          <div class="task-est">2 hrs</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check"></div>
+          <div class="task-text">
+            Cross browser testing — Chrome, Edge, Firefox
+            <small>Open in each browser, check layout and JS console</small>
+          </div>
+          <div><span class="badge badge-blue">TODO</span></div>
+          <div class="task-est">1 hr</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check"></div>
+          <div class="task-text">
+            Manual testing — run all test cases below
+            <small>Follow Section 04 manual test checklist completely</small>
+          </div>
+          <div><span class="badge badge-blue">TODO</span></div>
+          <div class="task-est">1.5 hrs</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check"></div>
+          <div class="task-text">
+            Write README.md with screenshots + demo GIF
+            <small>Tech stack, features list, setup instructions, live link</small>
+          </div>
+          <div><span class="badge badge-blue">TODO</span></div>
+          <div class="task-est">1 hr</div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-check"></div>
+          <div class="task-text">
+            Deploy to Vercel — follow Section 05 steps
+            <small>Push to GitHub → import on Vercel → add env variable</small>
+          </div>
+          <div><span class="badge badge-blue">TODO</span></div>
+          <div class="task-est">30 min</div>
+        </div>
+
+        <div style="padding:0.75rem 1.25rem;background:rgba(88,166,255,0.04);border-top:1px solid var(--border);">
+          <div class="progress-label"><span>Sprint 3 Progress</span><span style="color:var(--blue)">0/7 tasks</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:0%;background:var(--blue)"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       PHASE 4 — MANUAL TESTING
+  ============================================================ -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <span class="section-title">Manual Testing Checklist — Tick After Each Test</span>
+      <span class="badge badge-blue">UPCOMING</span>
+    </div>
+    <div class="section-body">
+
+      <div style="font-size:0.75rem;color:var(--text3);margin-bottom:1rem;padding:0.75rem;background:var(--bg3);border:1px solid var(--border);">
+        ⚠️ Do ALL these tests before deploying. Tick the checkbox and mark PASS or FAIL for each one.
+      </div>
+
+      <!-- Search Tests -->
+      <div class="test-section-label">🔍 Search Functionality</div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Type "London" → press SCAN button
+          <div class="test-expected">Expected: London weather loads correctly</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Type city name → press Enter key (not button)
+          <div class="test-expected">Expected: Same result as clicking SCAN</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Type a fake city "xyzabc" → search
+          <div class="test-expected">Expected: Error banner shows "LOCATION NOT FOUND"</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Click SCAN with empty search box
+          <div class="test-expected">Expected: Error "PLEASE ENTER A CITY NAME"</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Search "mumbai" (lowercase) → search
+          <div class="test-expected">Expected: Works correctly — API is case-insensitive</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <!-- Weather Display Tests -->
+      <div class="test-section-label">🌤 Weather Data Display</div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          City name shows in CAPITAL letters
+          <div class="test-expected">Expected: "LONDON" not "London"</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Country badge shows correct code (GB, IN, US etc)
+          <div class="test-expected">Expected: 2-letter country code matches city</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Weather icon loads and animates (float effect)
+          <div class="test-expected">Expected: Icon visible + slowly floating up and down</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          All 4 gauges animate from 0 to value
+          <div class="test-expected">Expected: Arc fills up smoothly on each new city search</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <!-- Unit Toggle Tests -->
+      <div class="test-section-label">🌡 Temperature Unit Toggle</div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Click °F — temperature converts correctly
+          <div class="test-expected">Example: 30°C should show 86°F</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Toggle to °F — forecast also updates to Fahrenheit
+          <div class="test-expected">Expected: All 5 forecast rows also convert</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Toggle °C / °F does NOT make new API calls
+          <div class="test-expected">Expected: No loading spinner — uses saved data</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <!-- GPS Tests -->
+      <div class="test-section-label">📍 Geolocation</div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Click ◎ LOCATE — browser permission popup appears
+          <div class="test-expected">Expected: Browser asks for location access</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Allow location → weather loads for your city
+          <div class="test-expected">Expected: Your actual current city appears</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Deny location → error message shows correctly
+          <div class="test-expected">Expected: "GEOLOCATION ACCESS DENIED BY USER"</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <!-- History Tests -->
+      <div class="test-section-label">🕐 Search History</div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Search 3 cities → all 3 chips appear in history bar
+          <div class="test-expected">Expected: History chips visible below search bar</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Refresh page → history chips still show (localStorage)
+          <div class="test-expected">Expected: History persists after F5 refresh</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Click a history chip → that city loads
+          <div class="test-expected">Expected: Weather changes to chip city on click</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <!-- Responsive Tests -->
+      <div class="test-section-label">📱 Responsive Design</div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Chrome DevTools → 375px (iPhone SE) — layout OK?
+          <div class="test-expected">Expected: No overflow, all content visible, no broken layout</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Chrome DevTools → 768px (iPad) — layout OK?
+          <div class="test-expected">Expected: Gauges in 2-column grid, looks balanced</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+      <div class="test-row">
+        <div class="test-check"></div>
+        <div class="test-label">
+          Full desktop 1440px — layout uses full width
+          <div class="test-expected">Expected: max-width container centered, not too stretched</div>
+        </div>
+        <div class="pass-fail">
+          <button class="pf-btn pass" onclick="markTest(this,'pass')">PASS</button>
+          <button class="pf-btn fail" onclick="markTest(this,'fail')">FAIL</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       PHASE 5 — VERCEL DEPLOY
+  ============================================================ -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-num">05</span>
+      <span class="section-title">Deployment — Vercel Step by Step</span>
+      <span class="badge badge-blue">UPCOMING</span>
+    </div>
+    <div class="section-body">
+
+      <div class="deploy-steps">
+
+        <div class="deploy-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">Create a GitHub Repository</div>
+            <div class="step-desc">Go to github.com → New Repository → name it <strong>wxscope-weather</strong> → Public → Create</div>
+            <div class="code-block">Repository name: wxscope-weather
+Visibility: Public ✓ (needed for free Vercel)</div>
+          </div>
+        </div>
+
+        <div class="deploy-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">Push Your Code to GitHub</div>
+            <div class="step-desc">Open terminal in your project folder and run these commands one by one:</div>
+            <div class="code-block">git init
+git add .
+git commit -m "feat: initial wxscope weather app"
+git branch -M main
+git remote add origin https://github.com/YOURUSERNAME/wxscope-weather.git
+git push -u origin main</div>
+          </div>
+        </div>
+
+        <div class="deploy-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">⚠️ IMPORTANT — Remove API Key Before Pushing</div>
+            <div class="step-desc">Never commit your real API key to GitHub. Replace it with a placeholder before git push:</div>
+            <div class="code-block">// In script.js — replace before pushing:
+const API_KEY = 'YOUR_API_KEY_HERE';
+
+// You will add the real key in Vercel env variables</div>
+          </div>
+        </div>
+
+        <div class="deploy-step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <div class="step-title">Import Project on Vercel</div>
+            <div class="step-desc">Go to vercel.com → Sign in with GitHub → New Project → Import your wxscope-weather repo → Click Deploy</div>
+            <div class="code-block">Framework Preset: Other (not Next.js)
+Root Directory:  ./  (leave default)
+Build Command:   (leave empty for static HTML)
+Output Directory:(leave empty)</div>
+          </div>
+        </div>
+
+        <div class="deploy-step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <div class="step-title">Add API Key as Environment Variable</div>
+            <div class="step-desc">In Vercel dashboard → Project Settings → Environment Variables → Add:</div>
+            <div class="code-block">Key:   OPENWEATHER_API_KEY
+Value: your_actual_api_key_here
+
+⚠️ Note: For pure HTML/JS projects, env vars
+   don't auto-inject. Best option for student
+   projects: just hardcode key in JS after deploy,
+   or use a simple Node proxy later.</div>
+          </div>
+        </div>
+
+        <div class="deploy-step">
+          <div class="step-num">6</div>
+          <div class="step-content">
+            <div class="step-title">Get Your Live URL</div>
+            <div class="step-desc">After deploy completes, Vercel gives you a live URL automatically. Share this in your portfolio and GitHub README.</div>
+            <div class="code-block">Your live URL will look like:
+https://wxscope-weather.vercel.app
+
+Every time you git push → Vercel auto-redeploys ✓</div>
+          </div>
+        </div>
+
+        <div class="deploy-step">
+          <div class="step-num">7</div>
+          <div class="step-content">
+            <div class="step-title">Update README.md — This Is What Interviewers Check</div>
+            <div class="step-desc">Add these sections to your README:</div>
+            <div class="code-block"># WXSCOPE — Weather Intelligence Terminal
+
+## 🔗 Live Demo
+https://wxscope-weather.vercel.app
+
+## 🛠 Tech Stack
+HTML5 · CSS3 · Vanilla JavaScript · OpenWeather API
+
+## ✨ Features
+- Real-time weather by city search
+- Auto GPS location detection
+- °C / °F toggle (no re-fetch)
+- 5-day forecast
+- localStorage search history
+- Dynamic theme per weather condition
+- Fully responsive (mobile first)
+
+## 📐 Architecture
+- Async/Await + Promise.all for parallel API calls
+- CSS custom properties for dynamic theming
+- SVG arc gauges with stroke-dashoffset animation
+- Modular JS — each feature in its own function</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="interview-card">
+        <div class="interview-label">▸ INTERVIEW ANSWER — "How did you deploy this?"</div>
+        <div class="interview-text">
+          "I pushed the project to GitHub and deployed it on Vercel. Every time I push a new commit, Vercel automatically redeploys — that's CI/CD in its simplest form. The live URL is always up to date. I also made sure to not commit the API key to the repository, which is a basic security practice."
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;padding:1.5rem 0;color:var(--text3);font-size:0.7rem;border-top:1px solid var(--border);margin-top:0.5rem;">
+    WXSCOPE Project Execution Plan · Built with Agile Methodology · Sprint-based Development
+  </div>
+
+</div>
+
+<script>
+  /* Interactive test buttons — mark pass/fail */
+  function markTest(btn, type) {
+    const row   = btn.closest('.test-row');
+    const check = row.querySelector('.test-check');
+    const btns  = row.querySelectorAll('.pf-btn');
+
+    btns.forEach(b => {
+      b.classList.remove('active-pass','active-fail');
+    });
+
+    if (type === 'pass') {
+      btn.classList.add('active-pass');
+      check.style.borderColor = '#3fb950';
+      check.style.background  = 'rgba(63,185,80,0.15)';
+      check.innerHTML = '<span style="color:#3fb950;font-size:10px;font-weight:700;padding-left:1px;">✓</span>';
+    } else {
+      btn.classList.add('active-fail');
+      check.style.borderColor = '#f85149';
+      check.style.background  = 'rgba(248,81,73,0.12)';
+      check.innerHTML = '<span style="color:#f85149;font-size:10px;font-weight:700;padding-left:1px;">✗</span>';
+    }
+  }
+</script>
+
+</body>
+</html>
