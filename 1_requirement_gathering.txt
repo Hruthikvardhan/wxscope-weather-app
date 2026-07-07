@@ -1,0 +1,89 @@
+============================================================
+WXSCOPE — REQUIREMENT GATHERING
+============================================================
+
+PROBLEM STATEMENT
+-----------------
+Users want to check live weather quickly.
+Existing apps are cluttered with ads.
+One clean page that shows everything = solution.
+
+WHO IS THE USER?
+----------------
+- Students
+- Travellers
+- Working professionals
+- Anyone who checks weather daily
+
+WHAT PROBLEM AM I SOLVING?
+---------------------------
+- Get live weather for any city
+- Auto detect current location
+- See 5 day forecast in one place
+- No page reload needed
+
+WHAT IS THE MVP?
+----------------
+Search bar + Show current weather
+Everything else is extra.
+
+------------------------------------------------------------
+FUNCTIONAL REQUIREMENTS (WHAT APP MUST DO)
+------------------------------------------------------------
+
+REQ ID   FEATURE                              PRIORITY
+------   -------                              --------
+FR-01    Search weather by city name          MUST HAVE
+FR-02    Show temperature                     MUST HAVE
+FR-03    Celsius and Fahrenheit toggle        MUST HAVE
+FR-04    Show weather condition + icon        MUST HAVE
+FR-05    Show humidity                        MUST HAVE
+FR-06    Show wind speed                      MUST HAVE
+FR-07    Show feels like temperature          MUST HAVE
+FR-08    Show visibility                      MUST HAVE
+FR-09    5 day forecast section               SHOULD HAVE
+FR-10    Auto GPS location detection          SHOULD HAVE
+FR-11    Recent search history                SHOULD HAVE
+FR-12    Loading spinner during API call      MUST HAVE
+FR-13    Error message if city not found      MUST HAVE
+FR-14    Dynamic color theme per weather      NICE TO HAVE
+
+------------------------------------------------------------
+NON FUNCTIONAL REQUIREMENTS (HOW APP MUST PERFORM)
+------------------------------------------------------------
+
+REQ ID   REQUIREMENT                          TARGET
+------   -----------                          ------
+NFR-01   Page load time                       Under 2 seconds
+NFR-02   Works on mobile tablet desktop       All screen sizes
+NFR-03   Browser support                      Chrome Edge Firefox Safari
+NFR-04   No frameworks used                   Pure HTML CSS JS only
+NFR-05   All API errors handled               401 404 429 500
+
+------------------------------------------------------------
+TECH STACK DECISIONS
+------------------------------------------------------------
+
+Frontend   : HTML5, CSS3, Vanilla JavaScript
+API        : OpenWeather API (Free Tier)
+Storage    : localStorage (search history)
+Fonts      : Google Fonts (Bebas Neue, Orbitron, Share Tech Mono)
+Deploy     : Vercel
+Repo       : GitHub
+
+------------------------------------------------------------
+API ENDPOINTS NEEDED
+------------------------------------------------------------
+
+Current Weather by City:
+https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid={key}
+
+5 Day Forecast by City:
+https://api.openweathermap.org/data/2.5/forecast?q={city}&units=metric&appid={key}
+
+Current Weather by GPS:
+https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={key}
+
+5 Day Forecast by GPS:
+https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&units=metric&appid={key}
+

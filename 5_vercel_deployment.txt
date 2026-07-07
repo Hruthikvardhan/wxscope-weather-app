@@ -1,0 +1,117 @@
+============================================================
+WXSCOPE — VERCEL DEPLOYMENT STEPS
+============================================================
+
+
+------------------------------------------------------------
+BEFORE DEPLOYING - CHECKLIST
+------------------------------------------------------------
+
+[ ] All 24 manual tests passed
+[ ] API key is replaced in script.js
+[ ] README.md file is written
+[ ] All 3 files in same folder (index.html style.css script.js)
+[ ] Tested in Chrome and Edge browsers
+
+
+------------------------------------------------------------
+STEP 1 - CREATE GITHUB REPOSITORY
+------------------------------------------------------------
+
+1. Go to github.com
+2. Click New Repository (green button)
+3. Repository name : wxscope-weather-app
+4. Description     : Real-time weather intelligence terminal built with vanilla JS and OpenWeather API
+5. Visibility      : Public
+6. Click Create Repository
+
+
+------------------------------------------------------------
+STEP 2 - PUSH CODE TO GITHUB
+------------------------------------------------------------
+
+Open terminal in your project folder and run:
+
+  git init
+  git add .
+  git commit -m "feat: add wxscope weather terminal"
+  git branch -M main
+  git remote add origin https://github.com/YOURNAME/wxscope-weather-app.git
+  git push -u origin main
+
+After this go to GitHub and confirm index.html is visible.
+
+
+------------------------------------------------------------
+STEP 3 - DEPLOY ON VERCEL
+------------------------------------------------------------
+
+1. Go to vercel.com
+2. Click Sign Up and choose Continue with GitHub
+3. Click Add New Project
+4. Find wxscope-weather-app in the list
+5. Click Import
+6. Leave all settings as default
+   Framework Preset = Other
+   Root Directory   = ./
+   Build Command    = leave empty
+   Output Directory = leave empty
+7. Click Deploy button
+8. Wait 30 seconds
+
+
+------------------------------------------------------------
+STEP 4 - GET YOUR LIVE URL
+------------------------------------------------------------
+
+After deploy finishes Vercel gives you a URL like:
+
+  https://wxscope-weather-app.vercel.app
+
+Copy this URL.
+Every time you push new code to GitHub,
+Vercel automatically redeploys. No manual steps needed.
+
+
+------------------------------------------------------------
+STEP 5 - ADD LIVE LINK TO README
+------------------------------------------------------------
+
+Open README.md and add your live URL at the top:
+
+  ## Live Demo
+  https://wxscope-weather-app.vercel.app
+
+Then push again:
+
+  git add README.md
+  git commit -m "docs: add live demo link"
+  git push
+
+
+------------------------------------------------------------
+WHAT TO SAY IN INTERVIEW
+------------------------------------------------------------
+
+"I pushed the project to GitHub and deployed on Vercel.
+Every time I push a new commit, Vercel automatically
+redeploys. That is CI/CD in its simplest form.
+I also made sure not to commit the API key to the
+repository, which is a basic security practice."
+
+
+------------------------------------------------------------
+FUTURE UPDATES - HOW TO REDEPLOY
+------------------------------------------------------------
+
+Whenever you make changes:
+
+  git add .
+  git commit -m "your message here"
+  git push
+
+Vercel picks it up automatically. Live URL updates in 30 seconds.
+
+============================================================
+END OF DOCUMENT
+============================================================

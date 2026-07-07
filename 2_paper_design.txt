@@ -1,0 +1,89 @@
+============================================================
+WXSCOPE — PAPER DESIGN NOTES
+============================================================
+(Draw these boxes on paper before coding)
+============================================================
+
+PAGE LAYOUT SKETCH
+------------------
+
++--------------------------------------------------+
+|  WXSCOPE LOGO              CLOCK  14:35:22       |  <- Header
++--------------------------------------------------+
+|  >_ [ Search city name... ]  [SCAN]  [LOCATE]   |  <- Search Bar
+|  HISTORY: LONDON  DELHI  MUMBAI                  |  <- History chips
++--------------------------------------------------+
+|  CITY NAME          |   TEMPERATURE              |
+|  Country  Time LIVE |      30 deg                |  <- Main Grid
+|  Icon  SUNNY        |    [ C ]  [ F ]            |  <- 2 columns
++--------------------------------------------------+
+|  HUMIDITY  |  WIND  |  FEELS LIKE  |  VISIBILITY |  <- 4 Gauges
+|  (circle)  | (circle)|  (circle)  |   (circle)  |
++--------------------------------------------------+
+|  5 DAY FORECAST TABLE                            |
+|  MON  icon  Cloudy       bar   32 deg  25 deg   |
+|  TUE  icon  Rainy        bar   28 deg  22 deg   |
+|  WED  icon  Sunny        bar   35 deg  27 deg   |
+|  THU  icon  Cloudy       bar   30 deg  24 deg   |
+|  FRI  icon  Stormy       bar   26 deg  20 deg   |
++--------------------------------------------------+
+|  WXSCOPE 2025    LIVE dot    OPENWEATHER API     |  <- Footer
++--------------------------------------------------+
+
+
+COLOR SYSTEM NOTES
+------------------
+
+Background       = #06090f  (very dark navy)
+Panel background = #0c1220  (slightly lighter navy)
+Text color       = #ddd0b3  (warm off white)
+
+Weather themes (body class changes color):
+sunny  = amber  #f5a623   (yellow orange)
+rain   = blue   #4d9fff   (bright blue)
+storm  = orange #ff6644   (red orange)
+cloud  = grey   #8eb0cc   (grey blue)
+snow   = ice    #aaddff   (light ice blue)
+mist   = grey   #99aaaa   (muted grey)
+
+One CSS variable --wx-accent controls ALL colors at once.
+When body class changes, entire dashboard recolors.
+
+
+FONT PLAN
+---------
+
+Big headings and city name  = Bebas Neue
+  (tall bold condensed font, great for large text)
+
+Numbers and digital displays = Orbitron
+  (sci fi geometric font, looks like digital screen)
+
+Body text labels descriptions = Share Tech Mono
+  (monospace terminal font, gives hacker feel)
+
+All loaded free from Google Fonts CDN.
+
+
+COMPONENT DECISIONS
+-------------------
+
+Radar background  = conic-gradient rotating animation
+Loading spinner   = CSS border spin animation
+Gauges            = SVG circles with stroke-dashoffset trick
+Forecast          = HTML table (semantic and clean)
+Error message     = Fixed banner that auto hides after 5 sec
+Weather icon      = OpenWeather icon URL, float animation
+Theme change      = JS adds class to body tag
+History chips     = Dynamically created span elements
+
+
+FOLDER STRUCTURE
+----------------
+
+wxscope-weather-app/
+  index.html     <- all HTML structure
+  style.css      <- all CSS styles
+  script.js      <- all JavaScript logic
+  README.md      <- project description for GitHub
+

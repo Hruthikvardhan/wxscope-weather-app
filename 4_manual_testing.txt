@@ -1,0 +1,177 @@
+============================================================
+WXSCOPE — MANUAL TESTING CHECKLIST
+Run all tests before deploying to Vercel
+Mark PASS or FAIL for each test
+============================================================
+
+
+------------------------------------------------------------
+SECTION 1 - SEARCH FUNCTIONALITY
+------------------------------------------------------------
+
+TEST 01
+  Action   : Type "London" and click SCAN button
+  Expected : London weather loads on screen
+  Result   : PASS / FAIL
+
+TEST 02
+  Action   : Type city name and press Enter key (not button)
+  Expected : Same result as clicking SCAN
+  Result   : PASS / FAIL
+
+TEST 03
+  Action   : Type a fake city "xyzabc123" and search
+  Expected : Error banner shows LOCATION NOT FOUND
+  Result   : PASS / FAIL
+
+TEST 04
+  Action   : Click SCAN with empty search box
+  Expected : Error shows PLEASE ENTER A CITY NAME
+  Result   : PASS / FAIL
+
+TEST 05
+  Action   : Type "mumbai" in lowercase and search
+  Expected : Works correctly, API is case insensitive
+  Result   : PASS / FAIL
+
+
+------------------------------------------------------------
+SECTION 2 - WEATHER DATA DISPLAY
+------------------------------------------------------------
+
+TEST 06
+  Action   : Search any city
+  Expected : City name shows in CAPITAL LETTERS
+  Result   : PASS / FAIL
+
+TEST 07
+  Action   : Search "London"
+  Expected : Country badge shows GB
+  Result   : PASS / FAIL
+
+TEST 08
+  Action   : Search any city
+  Expected : Weather icon loads and floats up and down
+  Result   : PASS / FAIL
+
+TEST 09
+  Action   : Search any city
+  Expected : All 4 gauges animate from 0 to value smoothly
+  Result   : PASS / FAIL
+
+TEST 10
+  Action   : Search any city
+  Expected : Radar background sweep is visible and rotating
+  Result   : PASS / FAIL
+
+
+------------------------------------------------------------
+SECTION 3 - TEMPERATURE TOGGLE
+------------------------------------------------------------
+
+TEST 11
+  Action   : Search a city then click F button
+  Expected : Temperature converts correctly (30C = 86F)
+  Result   : PASS / FAIL
+
+TEST 12
+  Action   : Toggle to F
+  Expected : Forecast rows also show Fahrenheit values
+  Result   : PASS / FAIL
+
+TEST 13
+  Action   : Toggle between C and F multiple times
+  Expected : No loading spinner appears, no new API call
+  Result   : PASS / FAIL
+
+
+------------------------------------------------------------
+SECTION 4 - GPS LOCATION
+------------------------------------------------------------
+
+TEST 14
+  Action   : Click LOCATE button
+  Expected : Browser popup asks for location permission
+  Result   : PASS / FAIL
+
+TEST 15
+  Action   : Click LOCATE and allow permission
+  Expected : Weather loads for your actual current city
+  Result   : PASS / FAIL
+
+TEST 16
+  Action   : Click LOCATE and deny permission
+  Expected : Error shows GEOLOCATION ACCESS DENIED BY USER
+  Result   : PASS / FAIL
+
+
+------------------------------------------------------------
+SECTION 5 - SEARCH HISTORY
+------------------------------------------------------------
+
+TEST 17
+  Action   : Search 3 different cities one by one
+  Expected : All 3 city chips appear below search bar
+  Result   : PASS / FAIL
+
+TEST 18
+  Action   : Search cities then press F5 to refresh page
+  Expected : History chips still show after refresh
+  Result   : PASS / FAIL
+
+TEST 19
+  Action   : Click any history chip
+  Expected : That city weather loads immediately
+  Result   : PASS / FAIL
+
+
+------------------------------------------------------------
+SECTION 6 - WEATHER THEME COLOR
+------------------------------------------------------------
+
+TEST 20
+  Action   : Search "Dubai" (should be clear sky)
+  Expected : Dashboard accent color is amber yellow
+  Result   : PASS / FAIL
+
+TEST 21
+  Action   : Search "Mumbai" (monsoon rain)
+  Expected : Dashboard accent color changes to blue
+  Result   : PASS / FAIL
+
+
+------------------------------------------------------------
+SECTION 7 - RESPONSIVE DESIGN
+------------------------------------------------------------
+
+TEST 22
+  Action   : Open Chrome DevTools, set width to 375px (mobile)
+  Expected : No horizontal scroll, all content visible
+  Result   : PASS / FAIL
+
+TEST 23
+  Action   : Set DevTools width to 768px (tablet)
+  Expected : Gauges show in 2 column grid
+  Result   : PASS / FAIL
+
+TEST 24
+  Action   : Full desktop width 1440px
+  Expected : Content centered with max width, not too stretched
+  Result   : PASS / FAIL
+
+
+------------------------------------------------------------
+TESTING SUMMARY
+------------------------------------------------------------
+
+Total Tests  : 24
+Passed       : ___ / 24
+Failed       : ___
+
+Failed Test Numbers : ________________________
+
+Notes : ________________________
+
+
+All 24 tests must pass before deploying to Vercel.
+

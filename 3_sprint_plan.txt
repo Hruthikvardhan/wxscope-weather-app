@@ -1,0 +1,164 @@
+============================================================
+WXSCOPE — SPRINT PLAN
+3 Sprints x 1 Week Each
+============================================================
+
+
+============================================================
+SPRINT 1 — CORE FOUNDATION
+Goal: Working weather app with basic search and display
+Week: 1  |  Total Tasks: 8
+============================================================
+
+TASK 1
+  What  : Set up project folder structure
+  How   : Create index.html, style.css, script.js files
+  Time  : 30 minutes
+  Status: [ ]
+
+TASK 2
+  What  : Register OpenWeather account and get API key
+  How   : Go to openweathermap.org, sign up free, copy key
+  Time  : 15 minutes
+  Status: [ ]
+
+TASK 3
+  What  : Build full HTML structure
+  How   : header, search, weather card, forecast, footer sections
+  Time  : 2 hours
+  Status: [ ]
+
+TASK 4
+  What  : Write fetchByCity() function
+  How   : async await + fetch() to call weather API
+  Time  : 1 hour
+  Status: [ ]
+
+TASK 5
+  What  : Display city name, temperature, condition, icon
+  How   : renderWeather(data) function writes to DOM
+  Time  : 1.5 hours
+  Status: [ ]
+
+TASK 6
+  What  : Search bar - click button and Enter key support
+  How   : addEventListener on button + keydown Enter event
+  Time  : 30 minutes
+  Status: [ ]
+
+TASK 7
+  What  : Error handling for city not found
+  How   : try catch + check res.ok + show error banner in UI
+  Time  : 45 minutes
+  Status: [ ]
+
+TASK 8
+  What  : Loading spinner show and hide
+  How   : showLoading() and hideLoading() in finally block
+  Time  : 30 minutes
+  Status: [ ]
+
+Sprint 1 done when: You can search a city and see weather data on screen
+
+
+============================================================
+SPRINT 2 — FEATURES
+Goal: Add forecast, GPS, unit toggle, search history
+Week: 2  |  Total Tasks: 7
+============================================================
+
+TASK 1
+  What  : Fetch 5 day forecast from forecast endpoint
+  How   : Promise.all to run both fetches at same time
+  Time  : 1 hour
+  Status: [ ]
+
+TASK 2
+  What  : renderForecast() - group by day, show 5 rows
+  How   : Group 40 readings by date key, pick one per day
+  Time  : 2 hours
+  Status: [ ]
+
+TASK 3
+  What  : Celsius and Fahrenheit toggle button
+  How   : setUnit() function, re-render temps, no re-fetch
+  Time  : 45 minutes
+  Status: [ ]
+
+TASK 4
+  What  : GPS auto locate button
+  How   : navigator.geolocation.getCurrentPosition then fetchByCoords
+  Time  : 1 hour
+  Status: [ ]
+
+TASK 5
+  What  : Search history using localStorage
+  How   : saveHistory() getHistory() renderHistory() functions
+  Time  : 1 hour
+  Status: [ ]
+
+TASK 6
+  What  : Show humidity wind feels like visibility values
+  How   : Map API values to 4 gauge elements in DOM
+  Time  : 1 hour
+  Status: [ ]
+
+TASK 7
+  What  : SVG arc gauge animation
+  How   : stroke-dashoffset formula in setGauge() function
+  Time  : 1.5 hours
+  Status: [ ]
+
+Sprint 2 done when: All features working, GPS works, history saves
+
+
+============================================================
+SPRINT 3 — POLISH AND DEPLOY
+Goal: UI polish, responsive, testing, Vercel deploy
+Week: 3  |  Total Tasks: 7
+============================================================
+
+TASK 1
+  What  : Dynamic weather theme - change color per condition
+  How   : applyTheme(conditionId) adds wx-sunny wx-rain etc to body
+  Time  : 1 hour
+  Status: [ ]
+
+TASK 2
+  What  : CSS animations - floating icon, pulsing dot, radar sweep
+  How   : keyframes float, pulse-dot, sweep in CSS
+  Time  : 1 hour
+  Status: [ ]
+
+TASK 3
+  What  : Responsive CSS - mobile first breakpoints
+  How   : Test at 375px 768px 1024px 1440px screen widths
+  Time  : 2 hours
+  Status: [ ]
+
+TASK 4
+  What  : Cross browser testing
+  How   : Open in Chrome, Edge, Firefox and check layout
+  Time  : 1 hour
+  Status: [ ]
+
+TASK 5
+  What  : Run all manual test cases
+  How   : Follow manual testing document completely
+  Time  : 1.5 hours
+  Status: [ ]
+
+TASK 6
+  What  : Write README.md file
+  How   : Add project title, features, tech stack, setup steps, live link
+  Time  : 1 hour
+  Status: [ ]
+
+TASK 7
+  What  : Deploy to Vercel
+  How   : Push to GitHub, import on Vercel, get live URL
+  Time  : 30 minutes
+  Status: [ ]
+
+Sprint 3 done when: Live URL working on Vercel, README looks good on GitHub
+
